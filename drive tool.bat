@@ -223,27 +223,41 @@ if /I "!SourceDrive!"=="!DestDrive!" (
 
 echo.
 echo Calculating sizes and checking available free space. Please wait...
-:: calculate using powershell and return exit code 0 if enough space, 1 if not
-powershell -NoProfile -Command "$ErrorActionPreference = 'SilentlyContinue'; $destFree = (Get-Volume -DriveLetter '!DestDrive!').SizeRemaining; if ('%CopyChoice%' -eq '1') { $srcSize = (Get-Volume -DriveLetter '!SourceDrive!').Size - (Get-Volume -DriveLetter '!SourceDrive!').SizeRemaining } else { $fso = New-Object -ComObject Scripting.FileSystemObject; try { $srcSize = $fso.GetFolder('!SourceDrive!:\Users').Size } catch { $srcSize = (Get-ChildItem -Path '!SourceDrive!:\Users' -Recurse -Force | Measure-Object -Property Length -Sum).Sum } }; if ($destFree -gt $srcSize) { exit 0 } else { exit 1 }"
 
-if %errorlevel% neq 0 (
-    echo.
-    echo ERROR: Not enough free space on Destination Drive (!DestDrive!:).
-    echo The source files are larger than the available space. Transfer aborted.
-    echo.
-    pause
-    goto OptDataTransfer
-)
+if "%CopyChoice%"=="1" goto CheckDriveSize
+if "%CopyChoice%"=="2" goto CheckUsersSize
 
+:CheckDriveSize
+powershell -NoProfile -Command "$ErrorActionPreference = 'SilentlyContinue'; $dest = Get-Volume -DriveLetter '!DestDrive!'; $src = Get-Volume -DriveLetter '!SourceDrive!'; if ($dest.SizeRemaining -gt ($src.Size - $src.SizeRemaining)) { exit 0 } else { exit 1 }"
+if %errorlevel% neq 0 goto SpaceError
+goto SizeCheckPassed
+
+:CheckUsersSize
+robocopy "!SourceDrive!:\Users" "!DestDrive!:\Dummy" /L /E /XJ /BYTES /NJH /NDL /NFL /NP /UNILOG:"%TEMP%\robo_size.log" >nul 2>&1
+
+:: Read the log to get the byte count and compare it to destination free space
+powershell -NoProfile -Command "$ErrorActionPreference = 'SilentlyContinue'; $logPath = $env:TEMP + '\robo_size.log'; $log = Get-Content -LiteralPath $logPath -Encoding Unicode; $bytesLine = $log | Where-Object { $_ -match 'Bytes\s*:\s+(\d+)' } | Select-Object -First 1; if ($bytesLine -match 'Bytes\s*:\s+(\d+)') { $srcBytes = [long]$matches[1]; $dest = Get-Volume -DriveLetter '!DestDrive!'; if ($dest.SizeRemaining -gt $srcBytes) { exit 0 } else { exit 1 } } else { exit 0 }"
+if %errorlevel% neq 0 goto SpaceError
+goto SizeCheckPassed
+
+:SpaceError
+echo.
+echo ERROR: Not enough free space on Destination Drive (!DestDrive!:).
+echo The source files are larger than the available space. Transfer aborted.
+echo.
+pause
+goto OptDataTransfer
+
+:SizeCheckPassed
 echo.
 echo Size check passed. Starting transfer...
 echo.
 
 if "%CopyChoice%"=="1" (
-    robocopy "!SourceDrive!:\" "!DestDrive!:\" /E /R:1 /W:1 /XJ /XD "$RECYCLE.BIN" "System Volume Information" "Config.Msi"
+    robocopy "!SourceDrive!:\" "!DestDrive!:\" /E /R:1 /W:1 /XJ /B /COPY:DAT /XD "$RECYCLE.BIN" "System Volume Information" "Config.Msi"
 )
 if "%CopyChoice%"=="2" (
-    robocopy "!SourceDrive!:\Users" "!DestDrive!:\Users" /E /R:1 /W:1 /XJ
+    robocopy "!SourceDrive!:\Users" "!DestDrive!:\Users" /E /R:1 /W:1 /XJ /B /COPY:DAT
 )
 
 echo.
