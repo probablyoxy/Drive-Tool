@@ -254,7 +254,7 @@ echo Size check passed. Starting transfer...
 echo.
 
 if "%CopyChoice%"=="1" (
-    robocopy "!SourceDrive!:\" "!DestDrive!:\" /E /R:1 /W:1 /XJ /B /COPY:DAT /XD "$RECYCLE.BIN" "System Volume Information" "Config.Msi"
+    robocopy !SourceDrive!:\ !DestDrive!:\ /E /R:1 /W:1 /XJ /B /COPY:DAT /XD "$RECYCLE.BIN" "System Volume Information" "Config.Msi"
 )
 if "%CopyChoice%"=="2" (
     robocopy "!SourceDrive!:\Users" "!DestDrive!:\Users" /E /R:1 /W:1 /XJ /B /COPY:DAT
@@ -262,5 +262,6 @@ if "%CopyChoice%"=="2" (
 
 echo.
 echo Transfer complete.
+echo Transfer from "%SourceDrive%" to "%DestDrive%" Completed at %TIME% on %DATE% > "%USERPROFILE%\Desktop\Data Transfer.txt"
 pause
 goto MainMenu
