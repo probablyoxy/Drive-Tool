@@ -262,6 +262,19 @@ if "%CopyChoice%"=="2" (
 
 echo.
 echo Transfer complete.
-echo Transfer from "%SourceDrive%" to "%DestDrive%" Completed at %TIME% on %DATE% > "%USERPROFILE%\Desktop\Data Transfer.txt"
+if "%CopyChoice%"=="1" ( (
+    echo -------------------------------------------------------------------
+    echo Transfer from "%SourceDrive%" to "%DestDrive%" Completed at %TIME% on %DATE%
+    echo -------------------------------------------------------------------
+    echo.
+    ) >> "%USERPROFILE%\Desktop\Data Transfer.txt")
+if "%CopyChoice%"=="2" ( (
+    echo -------------------------------------------------------------------------
+    echo Users Transfer from "%SourceDrive%" to "%DestDrive%" Completed at %TIME% on %DATE% 
+    echo Copied Users:
+    for /d %%U in ("!DestDrive!:\Users\*") do ( echo %%~nxU^ )
+    echo -------------------------------------------------------------------------
+    echo.
+    ) >> "%USERPROFILE%\Desktop\Data Transfer.txt")
 pause
 goto MainMenu
