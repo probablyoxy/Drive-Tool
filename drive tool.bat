@@ -253,26 +253,42 @@ echo.
 echo Size check passed. Starting transfer...
 echo.
 
-if "%CopyChoice%"=="1" (
-    robocopy !SourceDrive!:\ !DestDrive!:\ /E /R:1 /W:1 /XJ /B /COPY:DAT /XD "$RECYCLE.BIN" "System Volume Information" "Config.Msi"
+set "StartTime=!DATE! !TIME!"
+if "%CopyChoice%"=="1" ( (
+    echo.
+    echo ------------------------------------------------------------------------
+    echo Data Transfer from "%SourceDrive%" to "%DestDrive%" Started at !TIME! on !DATE! ) >> "%USERPROFILE%\Desktop\Data Transfer.txt"
+    robocopy !SourceDrive!:\ !DestDrive!:\ /E /R:1 /W:1 /XJ /B /COPY:DAT /XD "$RECYCLE.BIN" "System Volume Information" "Config.Msi" /LOG:"%TEMP%\robocopy_last.log" /TEE
 )
-if "%CopyChoice%"=="2" (
-    robocopy "!SourceDrive!:\Users" "!DestDrive!:\Users" /E /R:1 /W:1 /XJ /B /COPY:DAT
+if "%CopyChoice%"=="2" ( (
+    echo.
+    echo -------------------------------------------------------------------------
+    echo Users Transfer from "%SourceDrive%" to "%DestDrive%" Started at !TIME! on !DATE! )  >> "%USERPROFILE%\Desktop\Data Transfer.txt"
+    robocopy "!SourceDrive!:\Users" "!DestDrive!:\Users" /E /R:1 /W:1 /XJ /B /COPY:DAT /LOG:"%TEMP%\robocopy_last.log" /TEE
 )
+set "EndTime=!DATE! !TIME!"
+
+for /f "delims=" %%T in ('powershell -NoProfile -Command "$ts = [datetime]'!EndTime!' - [datetime]'!StartTime!'; '{0:00}h {1:00}m {2:00}s' -f [int]$ts.TotalHours, $ts.Minutes, $ts.Seconds"') do (
+    set "Duration=%%T")
 
 echo.
 echo Transfer complete.
 if "%CopyChoice%"=="1" ( (
-    echo -------------------------------------------------------------------
-    echo Transfer from "%SourceDrive%" to "%DestDrive%" Completed at %TIME% on %DATE%
-    echo -------------------------------------------------------------------
+    echo Data Transfer from "%SourceDrive%" to "%DestDrive%" Completed at %TIME% on %DATE%
+    echo Transfer Duration: !Duration!
+    echo.
+    powershell -NoProfile -Command "$log = Get-Content '%TEMP%\robocopy_last.log'; $idx = ($log | Select-String '^\s+Total\s+Copied').LineNumber; if ($idx) { $log[($idx-1)..($log.Count-2)] }"
+    echo ------------------------------------------------------------------------
     echo.
     ) >> "%USERPROFILE%\Desktop\Data Transfer.txt")
 if "%CopyChoice%"=="2" ( (
-    echo -------------------------------------------------------------------------
     echo Users Transfer from "%SourceDrive%" to "%DestDrive%" Completed at %TIME% on %DATE% 
+    echo Transfer Duration: !Duration!
+    echo.
     echo Copied Users:
     for /d %%U in ("!DestDrive!:\Users\*") do ( echo %%~nxU^ )
+    echo.
+    powershell -NoProfile -Command "$log = Get-Content '%TEMP%\robocopy_last.log'; $idx = ($log | Select-String '^\s+Total\s+Copied').LineNumber; if ($idx) { $log[($idx-1)..($log.Count-2)] }"
     echo -------------------------------------------------------------------------
     echo.
     ) >> "%USERPROFILE%\Desktop\Data Transfer.txt")
