@@ -52,8 +52,8 @@ echo.
 echo Drive  Size          Name                 Hardware
 echo ----------------------------------------------------------------
 
-:: Use PowerShell to map partitions to physical disks and format the output
-for /f "tokens=*" %%D in ('powershell -NoProfile -Command "Get-Partition | Where-Object DriveLetter | Sort-Object Size -Descending | ForEach-Object { $disk = Get-Disk -Number $_.DiskNumber; $vol = Get-Volume -DriveLetter $_.DriveLetter; '{0,-6} {1,-13} {2,-20} {3}' -f ($_.DriveLetter + ':'), ('{0} GB' -f [math]::Round($vol.Size/1GB, 2)), $vol.FileSystemLabel, $disk.Model }"') do (
+:: Use PowerShell to map volumes directly to ensure optical drives are included
+for /f "tokens=*" %%D in ('powershell -NoProfile -Command "Get-Volume | Where-Object DriveLetter | Sort-Object Size -Descending | ForEach-Object { $disk = Get-Partition -DriveLetter $_.DriveLetter -ErrorAction SilentlyContinue | Get-Disk -ErrorAction SilentlyContinue; $model = if ($disk) { $disk.Model } else { $_.DriveType }; $size = if ($_.Size) { '{0} GB' -f [math]::Round($_.Size/1GB, 2) } else { '0 GB' }; '{0,-6} {1,-13} {2,-20} {3}' -f ($_.DriveLetter + ':'), $size, $_.FileSystemLabel, $model }"') do (
     echo %%D
 )
 
@@ -156,8 +156,8 @@ echo.
 echo Drive  Size          Name                 Hardware
 echo ----------------------------------------------------------------
 
-:: Use PowerShell to map partitions to physical disks and format the output
-for /f "tokens=*" %%D in ('powershell -NoProfile -Command "Get-Partition | Where-Object DriveLetter | Sort-Object Size -Descending | ForEach-Object { $disk = Get-Disk -Number $_.DiskNumber; $vol = Get-Volume -DriveLetter $_.DriveLetter; '{0,-6} {1,-13} {2,-20} {3}' -f ($_.DriveLetter + ':'), ('{0} GB' -f [math]::Round($vol.Size/1GB, 2)), $vol.FileSystemLabel, $disk.Model }"') do (
+:: Use PowerShell to map volumes directly to ensure optical drives are included
+for /f "tokens=*" %%D in ('powershell -NoProfile -Command "Get-Volume | Where-Object DriveLetter | Sort-Object Size -Descending | ForEach-Object { $disk = Get-Partition -DriveLetter $_.DriveLetter -ErrorAction SilentlyContinue | Get-Disk -ErrorAction SilentlyContinue; $model = if ($disk) { $disk.Model } else { $_.DriveType }; $size = if ($_.Size) { '{0} GB' -f [math]::Round($_.Size/1GB, 2) } else { '0 GB' }; '{0,-6} {1,-13} {2,-20} {3}' -f ($_.DriveLetter + ':'), $size, $_.FileSystemLabel, $model }"') do (
     echo %%D
 )
 
@@ -199,8 +199,8 @@ echo.
 echo Drive  Size          Name                 Hardware
 echo ----------------------------------------------------------------
 
-:: Use PowerShell to map partitions to physical disks and format the output
-for /f "tokens=*" %%D in ('powershell -NoProfile -Command "Get-Partition | Where-Object DriveLetter | Sort-Object Size -Descending | ForEach-Object { $disk = Get-Disk -Number $_.DiskNumber; $vol = Get-Volume -DriveLetter $_.DriveLetter; '{0,-6} {1,-13} {2,-20} {3}' -f ($_.DriveLetter + ':'), ('{0} GB' -f [math]::Round($vol.Size/1GB, 2)), $vol.FileSystemLabel, $disk.Model }"') do (
+:: Use PowerShell to map volumes directly to ensure optical drives are included
+for /f "tokens=*" %%D in ('powershell -NoProfile -Command "Get-Volume | Where-Object DriveLetter | Sort-Object Size -Descending | ForEach-Object { $disk = Get-Partition -DriveLetter $_.DriveLetter -ErrorAction SilentlyContinue | Get-Disk -ErrorAction SilentlyContinue; $model = if ($disk) { $disk.Model } else { $_.DriveType }; $size = if ($_.Size) { '{0} GB' -f [math]::Round($_.Size/1GB, 2) } else { '0 GB' }; '{0,-6} {1,-13} {2,-20} {3}' -f ($_.DriveLetter + ':'), $size, $_.FileSystemLabel, $model }"') do (
     echo %%D
 )
 
