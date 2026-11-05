@@ -281,7 +281,7 @@ if "%CopyChoice%"=="1" ( (
     echo.
     echo ------------------------------------------------------------------------
     echo Data Transfer from "!SourceDrive!:" to "!DestDrive!:" Started at !TIME! on !DATE! ) >> "%USERPROFILE%\Desktop\Data Transfer.txt"
-    robocopy "!SourcePath!\" "!DestPath!\" /E /R:3 /W:0 /XJ /B /COPY:DAT /XD "$RECYCLE.BIN" "System Volume Information" "Config.Msi" /LOG:"%TEMP%\robocopy_last.log" /TEE
+    robocopy "!SourcePath!\\" "!DestPath!\\" /E /R:3 /W:0 /XJ /B /COPY:DAT /XD "$RECYCLE.BIN" "System Volume Information" "Config.Msi" /LOG:"%TEMP%\robocopy_last.log" /TEE
 )
 if "%CopyChoice%"=="2" ( (
     echo.
