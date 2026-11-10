@@ -294,60 +294,19 @@ goto WriteLog
 
 :NetworkStagedTransfer
 set "StartTime=!DATE! !TIME!"
-set "PsScript=%TEMP%\stage_transfer.ps1"
 
-:: Dynamically generate PowerShell file-by-file staging logic
-echo $ErrorActionPreference = 'SilentlyContinue' > "!PsScript!"
-echo $srcBase = '!SourcePath!' >> "!PsScript!"
-echo $dstBase = '!DestPath!' >> "!PsScript!"
-echo $choice = '%CopyChoice%' >> "!PsScript!"
-echo if ($choice -eq '1') { $src = $srcBase; $dest = $dstBase } else { $src = Join-Path $srcBase 'Users'; $dest = Join-Path $dstBase 'Users' } >> "!PsScript!"
-echo $tempBase = Join-Path $env:TEMP 'RoboStage' >> "!PsScript!"
-echo if (Test-Path $tempBase) { Remove-Item $tempBase -Recurse -Force ^| Out-Null } >> "!PsScript!"
-echo New-Item -ItemType Directory -Path $tempBase ^| Out-Null >> "!PsScript!"
-echo Write-Host 'Scanning for locked files using Backup Mode... Please wait.' -ForegroundColor Cyan >> "!PsScript!"
-echo $listArgs = @($src, 'C:\dummy', '/E', '/B', '/L', '/XJ', '/FP', '/NJH', '/NJS', '/NDL', '/NC', '/NS') >> "!PsScript!"
-echo if ($choice -eq '1') { $listArgs += @('/XD', "`$RECYCLE.BIN", 'System Volume Information', 'Config.Msi') } >> "!PsScript!"
-echo $fileLines = ^& robocopy $listArgs >> "!PsScript!"
-echo $validFiles = @() >> "!PsScript!"
-echo foreach ($line in $fileLines) { >> "!PsScript!"
-echo     $path = $line.Trim() >> "!PsScript!"
-echo     if ($path.Length -gt 2) { $validFiles += $path } >> "!PsScript!"
-echo } >> "!PsScript!"
-echo $total = $validFiles.Count >> "!PsScript!"
-echo $i = 0 >> "!PsScript!"
-echo $escSrc = [regex]::Escape($src) >> "!PsScript!"
-echo foreach ($path in $validFiles) { >> "!PsScript!"
-echo     $i++ >> "!PsScript!"
-echo     $fileName = Split-Path $path -Leaf >> "!PsScript!"
-echo     $srcParent = Split-Path $path -Parent >> "!PsScript!"
-echo     $rel = ($path -ireplace "^$escSrc", '').TrimStart('\') >> "!PsScript!"
-echo     $tmp = Join-Path $tempBase $rel >> "!PsScript!"
-echo     $dst = Join-Path $dest $rel >> "!PsScript!"
-echo     $tmpDir = Split-Path $tmp -Parent >> "!PsScript!"
-echo     $dstDir = Split-Path $dst -Parent >> "!PsScript!"
-echo     if (-not (Test-Path $tmpDir)) { New-Item -ItemType Directory -Path $tmpDir -Force ^| Out-Null } >> "!PsScript!"
-echo     if (-not (Test-Path $dstDir)) { New-Item -ItemType Directory -Path $dstDir -Force ^| Out-Null } >> "!PsScript!"
-echo     Write-Progress -Activity 'File Staging Transfer to NAS' -Status "[$i / $total] $fileName" -PercentComplete (($i / $total) * 100) >> "!PsScript!"
-echo     $robocopyArgs1 = @($srcParent, $tmpDir, $fileName, '/R:3', '/W:0', '/B', '/COPY:DAT', '/XJ', '/NJH', '/NJS', '/NDL', '/NC', '/NS', '/NP') >> "!PsScript!"
-echo     ^& robocopy $robocopyArgs1 ^| Out-Null >> "!PsScript!"
-echo     $robocopyArgs2 = @($tmpDir, $dstDir, $fileName, '/R:3', '/W:0', '/COPY:DAT', '/XJ', '/NJH', '/NJS', '/NDL', '/NC', '/NS', '/NP') >> "!PsScript!"
-echo     ^& robocopy $robocopyArgs2 ^| Out-Null >> "!PsScript!"
-echo     Remove-Item $tmp -Force >> "!PsScript!"
-echo } >> "!PsScript!"
-echo Write-Progress -Activity 'File Staging Transfer to NAS' -Completed >> "!PsScript!"
-echo Remove-Item $tempBase -Recurse -Force ^| Out-Null >> "!PsScript!"
+echo.
+echo Starting high-speed network transfer...
+echo You can monitor network throughput in Task Manager.
 
-powershell -NoProfile -ExecutionPolicy Bypass -File "!PsScript!"
-del "!PsScript!"
+if "%CopyChoice%"=="1" (
+    robocopy "!SourcePath!\\" "!DestPath!\\" /E /B /COPY:DAT /FFT /XJ /R:3 /W:0 /XD "$RECYCLE.BIN" "System Volume Information" "Config.Msi" /LOG:"%TEMP%\robocopy_last.log" /TEE
+)
+if "%CopyChoice%"=="2" (
+    robocopy "!SourcePath!\Users" "!DestPath!\Users" /E /B /COPY:DAT /FFT /XJ /R:3 /W:0 /LOG:"%TEMP%\robocopy_last.log" /TEE
+)
+
 set "EndTime=!DATE! !TIME!"
-
-:: Fake a robocopy log for the network output to keep log parsing happy
-(
-    echo Copied Files to Network Location
-    echo.
-) > "%TEMP%\robocopy_last.log"
-
 goto WriteLog
 
 :WriteLog
